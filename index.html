@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>디지털배움터 수강 신청서</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Gmarket+Sans:wght@300;500;700&display=swap');
+
+  :root {
+    --primary: #1a3a5c;
+    --accent: #00b4d8;
+    --accent2: #ff6b35;
+    --light: #f0f7ff;
+    --text: #1a2a3a;
+    --muted: #6b8299;
+    --border: #cde0f0;
+    --white: #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #e8f4fb;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,60,120,0.13);
+    margin-bottom: 30px;
+  }
+
+  /* ── 헤더 ── */
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, #0d6fa8 100%);
+    padding: 36px 40px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    right: 60px; bottom: -60px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(0,180,216,0.15);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+  .badge {
+    background: var(--accent2);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .header h1 {
+    font-family: 'Gmarket Sans', 'Noto Sans KR', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.3;
+  }
+  .header h1 span { color: #7dd6f0; }
+  .header-sub {
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+
+  /* ── 섹션 공통 ── */
+  .section {
+    padding: 28px 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── 기본정보 그리드 ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .info-grid.full { grid-template-columns: 1fr; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .field .input-line {
+    border: none;
+    border-bottom: 2px solid var(--border);
+    padding: 6px 2px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: transparent;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .field .input-line:focus { border-color: var(--accent); }
+
+  /* ── 사용 수준 ── */
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .level-card {
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .level-card input[type=radio] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .level-card:hover { border-color: var(--accent); background: var(--light); }
+  .level-card.selected {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, #e0f5fc, #f0faff);
+  }
+  .level-icon { font-size: 22px; margin-bottom: 6px; }
+  .level-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+  .level-desc { font-size: 10px; color: var(--muted); line-height: 1.4; }
+
+  /* ── 수강반 선택 ── */
+  .schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .schedule-table thead th {
+    background: var(--primary);
+    color: white;
+    padding: 10px 14px;
+    font-weight: 600;
+    text-align: left;
+  }
+  .schedule-table thead th:first-child { border-radius: 8px 0 0 0; }
+  .schedule-table thead th:last-child { border-radius: 0 8px 0 0; }
+
+  .schedule-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .schedule-table tbody tr:hover { background: var(--light); }
+  .schedule-table tbody tr.checked { background: #e0f5fc; }
+
+  .schedule-table td {
+    padding: 12px 14px;
+    vertical-align: middle;
+  }
+  .schedule-table td:first-child { width: 36px; text-align: center; }
+
+  .day-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .day-화 { background: #fff0e8; color: #cc4a00; }
+  .day-목 { background: #e8f4ff; color: #005599; }
+  .day-토 { background: #e8ffe8; color: #006622; }
+
+  .time-text { color: var(--muted); font-size: 12px; }
+  .class-name { font-weight: 600; color: var(--primary); }
+
+  .check-box {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    display: inline-block;
+    position: relative;
+    transition: all 0.2s;
+  }
+  .schedule-table tbody tr.checked .check-box {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .schedule-table tbody tr.checked .check-box::after {
+    content: '✓';
+    position: absolute;
+    top: -2px; left: 1px;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  /* ── 기타 ── */
+  .textarea-field {
+    width: 100%;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    resize: vertical;
+    outline: none;
+    min-height: 60px;
+    transition: border-color 0.2s;
+  }
+  .textarea-field:focus { border-color: var(--accent); }
+
+  /* ── 동의 ── */
+  .agree-box {
+    background: var(--light);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+  .agree-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    cursor: pointer;
+  }
+  .agree-check input { width: 16px; height: 16px; accent-color: var(--accent); }
+
+  /* ── 제출 버튼 ── */
+  .submit-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--primary), #0d6fa8);
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 8px;
+  }
+  .submit-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+
+  /* ════════════════════════════════
+     배치표 페이지
+  ════════════════════════════════ */
+  .placement-header {
+    background: linear-gradient(135deg, #1a3a5c 0%, #0d6fa8 100%);
+    padding: 28px 40px;
+    color: white;
+  }
+  .placement-header h2 {
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .placement-header p { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 4px; }
+
+  .placement-section { padding: 28px 40px; border-bottom: 1px solid var(--border); }
+  .placement-section:last-child { border-bottom: none; }
+
+  .day-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .day-label {
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .day-line { flex: 1; height: 2px; background: var(--border); }
+
+  .class-card {
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .class-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: var(--light);
+    border-bottom: 1px solid var(--border);
+  }
+  .class-card-title {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 14px;
+  }
+  .class-card-time { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .quota-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .quota-text { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .quota-bar {
+    width: 80px; height: 8px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .quota-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #0077aa);
+    border-radius: 99px;
+    width: 0%;
+    transition: width 0.5s;
+  }
+
+  .name-slots {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+  .name-slot {
+    background: white;
+    padding: 9px 10px;
+    font-size: 12px;
+    color: var(--muted);
+    min-height: 36px;
+    position: relative;
+  }
+  .slot-num {
+    font-size: 10px;
+    color: #ccc;
+    margin-bottom: 2px;
+  }
+  .slot-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .name-slot.filled { background: #f0faff; }
+
+  /* ── 인쇄 ── */
+  @media print {
+    body { background: white; padding: 0; }
+    .page { box-shadow: none; border-radius: 0; margin-bottom: 0; page-break-after: always; }
+    .submit-btn { display: none; }
+  }
+
+  @media (max-width: 600px) {
+    .section, .placement-section { padding: 20px; }
+    .header, .placement-header { padding: 24px 20px; }
+    .info-grid { grid-template-columns: 1fr; }
+    .level-grid { grid-template-columns: repeat(2, 1fr); }
+    .name-slots { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* ── 취소 힌트 ── */
+  .name-slot.filled {
+    cursor: pointer;
+    position: relative;
+  }
+  .cancel-hint {
+    font-size: 9px;
+    color: #ff6b35;
+    margin-top: 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .name-slot.filled:hover { background: #fff0eb !important; }
+  .name-slot.filled:hover .cancel-hint { opacity: 1; }
+  .name-slot.filled:hover .slot-name { color: #cc3300; }
+
+  /* ── 취소 모달 ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-box {
+    background: white;
+    border-radius: 16px;
+    padding: 32px 28px 24px;
+    max-width: 340px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  }
+  .modal-icon { font-size: 36px; margin-bottom: 12px; }
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+  .modal-info {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .modal-btn:hover { opacity: 0.85; }
+  .btn-cancel-no { background: var(--light); color: var(--muted); }
+  .btn-cancel-yes { background: #ff6b35; color: white; }
+
+</style>
+</head>
+<body>
+
+<!-- ════ 수강 신청서 ════ -->
+<div class="page">
+  <div class="header">
+    <div class="header-top">
+      <span class="badge">2025 디지털배움터</span>
+    </div>
+    <h1>수강 <span>신청서</span></h1>
+    <p class="header-sub">원하시는 강좌를 자유롭게 중복 선택하실 수 있습니다.</p>
+  </div>
+
+  <!-- 기본 정보 -->
+  <div class="section">
+    <div class="section-title">기본 정보</div>
+    <div class="info-grid">
+      <div class="field">
+        <label>이름</label>
+        <input class="input-line" type="text" placeholder="홍길동">
+      </div>
+      <div class="field">
+        <label>연락처</label>
+        <input class="input-line" type="tel" placeholder="010-0000-0000">
+      </div>
+      <div class="field">
+        <label>나이</label>
+        <input class="input-line" type="text" placeholder="예) 65세">
+      </div>
+      <div class="field">
+        <label>거주 지역</label>
+        <input class="input-line" type="text" placeholder="예) OO동">
+      </div>
+    </div>
+  </div>
+
+  <!-- 기기 사용 수준 -->
+  <div class="section">
+    <div class="section-title">스마트기기 사용 수준</div>
+    <div class="level-grid" id="levelGrid">
+      <label class="level-card" onclick="selectLevel(this)">
+        <input type="radio" name="level" value="beginner">
+        <div class="level-icon">🌱</div>
+        <div class="level-name">입문</div>
+        <div class="level-desc">처음 사용하거나 거의 못 다룸</div>
+      </label>
+      <label class="level-card" onclick="selectLevel(this)">
+        <input type="radio" name="level" value="basic">
+        <div class="level-icon">📱</div>
+        <div class="level-name">기초</div>
+        <div class="level-desc">전화·사진 등 기본 기능만 사용</div>
+      </label>
+      <label class="level-card" onclick="selectLevel(this)">
+        <input type="radio" name="level" value="middle">
+        <div class="level-icon">💻</div>
+        <div class="level-name">중급</div>
+        <div class="level-desc">앱 설치·검색 등 어느 정도 활용</div>
+      </label>
+      <label class="level-card" onclick="selectLevel(this)">
+        <input type="radio" name="level" value="advanced">
+        <div class="level-icon">🚀</div>
+        <div class="level-name">능숙</div>
+        <div class="level-desc">SNS·유튜브·업무 등 자유롭게 활용</div>
+      </label>
+    </div>
+  </div>
+
+  <!-- 수강반 선택 -->
+  <div class="section">
+    <div class="section-title">수강반 선택 <span style="font-size:11px;color:var(--muted);text-transform:none;font-weight:400;letter-spacing:0">(중복 선택 가능 · 각 반 정원 10명)</span></div>
+    <table class="schedule-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>요일</th>
+          <th>시간</th>
+          <th>강좌명</th>
+        </tr>
+      </thead>
+      <tbody id="scheduleBody">
+        <tr onclick="toggleRow(this)" data-id="1">
+          <td><span class="check-box"></span></td>
+          <td><span class="day-badge day-화">화요일</span></td>
+          <td class="time-text">오전 9시 ~ 12시</td>
+          <td class="class-name">시니어 스마트폰 활용반</td>
+        </tr>
+        <tr onclick="toggleRow(this)" data-id="2">
+          <td><span class="check-box"></span></td>
+          <td><span class="day-badge day-화">화요일</span></td>
+          <td class="time-text">오후 1시 ~ 4시</td>
+          <td class="class-name">바이브코딩 + 전자책반</td>
+        </tr>
+        <tr onclick="toggleRow(this)" data-id="3">
+          <td><span class="check-box"></span></td>
+          <td><span class="day-badge day-목">목요일</span></td>
+          <td class="time-text">오전 9시 ~ 12시</td>
+          <td class="class-name">유튜브 + 인스타그램반</td>
+        </tr>
+        <tr onclick="toggleRow(this)" data-id="4">
+          <td><span class="check-box"></span></td>
+          <td><span class="day-badge day-목">목요일</span></td>
+          <td class="time-text">오후 1시 ~ 4시</td>
+          <td class="class-name">컴퓨터 생초보 + AI입문반</td>
+        </tr>
+        <tr onclick="toggleRow(this)" data-id="5">
+          <td><span class="check-box"></span></td>
+          <td><span class="day-badge day-목">목요일</span></td>
+          <td class="time-text">오후 5:00 ~ 8:00</td>
+          <td class="class-name">블로그 체험단반</td>
+        </tr>
+        <tr onclick="toggleRow(this)" data-id="6">
+          <td><span class="check-box"></span></td>
+          <td><span class="day-badge day-토">토요일</span></td>
+          <td class="time-text">오전 9시 ~ 12시</td>
+          <td class="class-name">블록코딩(엔트리)반</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 기타 -->
+  <div class="section">
+    <div class="section-title">기타 사항</div>
+    <textarea class="textarea-field" placeholder="건강상 주의사항, 참석 불가능한 날짜, 문의사항 등 자유롭게 적어주세요."></textarea>
+  </div>
+
+  <!-- 동의 및 제출 -->
+  <div class="section">
+    <div class="agree-box">
+      수집 항목: 이름, 연락처, 나이, 거주지역, 수강 정보<br>
+      수집 목적: 디지털배움터 수강 신청 및 안내<br>
+      보유 기간: 교육 종료 후 1년
+    </div>
+    <label class="agree-check" style="margin-bottom:18px">
+      <input type="checkbox" id="agreeCheck">
+      개인정보 수집·이용에 동의합니다.
+    </label>
+    <button class="submit-btn" onclick="submitForm()">✅ 신청 완료</button>
+  </div>
+  <!-- 신청 완료 토스트 -->
+  <div id="toast" style="display:none;position:fixed;top:30px;left:50%;transform:translateX(-50%);background:#1a3a5c;color:white;padding:14px 28px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+    ✅ 신청이 완료되었습니다! 배치표에 반영되었어요.
+  </div>
+</div>
+
+<!-- ════ 수강생 배치표 ════ -->
+<div class="page">
+  <div class="placement-header">
+    <h2>📋 수강생 배치표</h2>
+    <p>각 반 정원 10명 · 중복 수강 가능</p>
+  </div>
+
+  <!-- 화요일 -->
+  <div class="placement-section">
+    <div class="day-header">
+      <span class="day-label">🔴 화요일</span>
+      <div class="day-line"></div>
+    </div>
+
+    <div class="class-card">
+      <div class="class-card-header">
+        <div>
+          <div class="class-card-title">시니어 스마트폰 활용반</div>
+          <div class="class-card-time">오전 9:00 ~ 12:00</div>
+        </div>
+        <div class="quota-bar-wrap">
+          <span class="quota-text" id="q1">0 / 10명</span>
+          <div class="quota-bar"><div class="quota-fill" id="qf1"></div></div>
+        </div>
+      </div>
+      <div class="name-slots" id="slots1">
+      </div>
+    </div>
+
+    <div class="class-card">
+      <div class="class-card-header">
+        <div>
+          <div class="class-card-title">바이브코딩 + 전자책반</div>
+          <div class="class-card-time">오후 1:00 ~ 4:00</div>
+        </div>
+        <div class="quota-bar-wrap">
+          <span class="quota-text" id="q2">0 / 10명</span>
+          <div class="quota-bar"><div class="quota-fill" id="qf2"></div></div>
+        </div>
+      </div>
+      <div class="name-slots" id="slots2"></div>
+    </div>
+  </div>
+
+  <!-- 목요일 -->
+  <div class="placement-section">
+    <div class="day-header">
+      <span class="day-label">🔵 목요일</span>
+      <div class="day-line"></div>
+    </div>
+
+    <div class="class-card">
+      <div class="class-card-header">
+        <div>
+          <div class="class-card-title">유튜브 + 인스타그램반</div>
+          <div class="class-card-time">오전 9:00 ~ 12:00</div>
+        </div>
+        <div class="quota-bar-wrap">
+          <span class="quota-text" id="q3">0 / 10명</span>
+          <div class="quota-bar"><div class="quota-fill" id="qf3"></div></div>
+        </div>
+      </div>
+      <div class="name-slots" id="slots3"></div>
+    </div>
+
+    <div class="class-card">
+      <div class="class-card-header">
+        <div>
+          <div class="class-card-title">컴퓨터 생초보 + AI입문반</div>
+          <div class="class-card-time">오후 1:00 ~ 4:00</div>
+        </div>
+        <div class="quota-bar-wrap">
+          <span class="quota-text" id="q4">0 / 10명</span>
+          <div class="quota-bar"><div class="quota-fill" id="qf4"></div></div>
+        </div>
+      </div>
+      <div class="name-slots" id="slots4"></div>
+    </div>
+
+    <div class="class-card">
+      <div class="class-card-header">
+        <div>
+          <div class="class-card-title">블로그 체험단반</div>
+          <div class="class-card-time">오후 5:00 ~ 8:00</div>
+        </div>
+        <div class="quota-bar-wrap">
+          <span class="quota-text" id="q5">0 / 10명</span>
+          <div class="quota-bar"><div class="quota-fill" id="qf5"></div></div>
+        </div>
+      </div>
+      <div class="name-slots" id="slots5"></div>
+    </div>
+  </div>
+
+  <!-- 토요일 -->
+  <div class="placement-section">
+    <div class="day-header">
+      <span class="day-label">🟢 토요일</span>
+      <div class="day-line"></div>
+    </div>
+
+    <div class="class-card">
+      <div class="class-card-header">
+        <div>
+          <div class="class-card-title">블록코딩(엔트리)반</div>
+          <div class="class-card-time">오전 9:00 ~ 12:00</div>
+        </div>
+        <div class="quota-bar-wrap">
+          <span class="quota-text" id="q6">0 / 10명</span>
+          <div class="quota-bar"><div class="quota-fill" id="qf6"></div></div>
+        </div>
+      </div>
+      <div class="name-slots" id="slots6"></div>
+    </div>
+  </div>
+
+  <!-- 직접 추가 UI (관리자용) -->
+  <div class="section">
+    <div class="section-title">직접 추가 <span style="font-size:11px;color:var(--muted);text-transform:none;font-weight:400;letter-spacing:0">(관리자 수동 입력)</span></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div class="field" style="flex:1;min-width:120px">
+        <label>이름</label>
+        <input class="input-line" type="text" id="addName" placeholder="이름 입력">
+      </div>
+      <div class="field" style="flex:2;min-width:200px">
+        <label>수강반 선택</label>
+        <select class="input-line" id="addClass" style="cursor:pointer">
+          <option value="1">화요일 오전 – 시니어 스마트폰 활용반</option>
+          <option value="2">화요일 오후 – 바이브코딩 + 전자책반</option>
+          <option value="3">목요일 오전 – 유튜브 + 인스타그램반</option>
+          <option value="4">목요일 오후 – 컴퓨터 생초보 + AI입문반</option>
+          <option value="5">목요일 저녁 – 블로그 체험단반</option>
+          <option value="6">토요일 오전 – 블록코딩(엔트리)반</option>
+        </select>
+      </div>
+      <button class="submit-btn" style="width:auto;padding:8px 24px;margin-top:0" onclick="addStudent()">추가</button>
+    </div>
+    <div id="addMsg" style="font-size:12px;color:var(--accent2);margin-top:8px;min-height:16px"></div>
+  </div>
+</div>
+
+<script>
+  /* ════════════════════════════════
+     공유 상태
+  ════════════════════════════════ */
+  const MAX = 10;
+  const students = { 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] };
+
+  /* ── 배치표 렌더 ── */
+  function renderSlots(classId) {
+    const el = document.getElementById('slots' + classId);
+    const list = students[classId];
+    let html = '';
+    for (let i = 0; i < MAX; i++) {
+      if (list[i]) {
+        html += `<div class="name-slot filled" onclick="confirmCancel(${classId}, ${i})" title="클릭하면 취소">
+          <div class="slot-num">${i+1}</div>
+          <div class="slot-name">${list[i].name}</div>
+          <div style="font-size:9px;color:#aaa">${list[i].level}</div>
+          <div class="cancel-hint">✕ 취소</div>
+        </div>`;
+      } else {
+        html += `<div class="name-slot"><div class="slot-num">${i+1}</div><div class="slot-name" style="color:#ddd">─</div></div>`;
+      }
+    }
+    el.innerHTML = html;
+    const cnt = list.length;
+    document.getElementById('q' + classId).textContent = cnt + ' / 10명';
+    document.getElementById('qf' + classId).style.width = (cnt / MAX * 100) + '%';
+  }
+
+  /* ── 취소 확인 모달 ── */
+  function confirmCancel(classId, idx) {
+    const student = students[classId][idx];
+    document.getElementById('cancelModal').style.display = 'flex';
+    document.getElementById('cancelInfo').textContent =
+      '"' + student.name + '"님을 이 반에서 취소하시겠습니까?';
+    document.getElementById('cancelConfirmBtn').onclick = function() {
+      students[classId].splice(idx, 1);
+      renderSlots(classId);
+      closeModal();
+      showToast('🗑️ ' + student.name + '님 수강이 취소되었습니다.');
+    };
+  }
+
+  function closeModal() {
+    document.getElementById('cancelModal').style.display = 'none';
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 3000);
+  }
+
+  /* ── 초기 렌더 ── */
+  for (let i = 1; i <= 6; i++) renderSlots(i);
+
+  /* ── 신청서: 수강반 토글 ── */
+  function toggleRow(row) {
+    row.classList.toggle('checked');
+  }
+
+  /* ── 신청서: 사용 수준 선택 ── */
+  function selectLevel(card) {
+    document.querySelectorAll('.level-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+  }
+
+  /* ── 신청 완료 → 배치표 자동 반영 ── */
+  function submitForm() {
+    // 이름 확인
+    const name = document.querySelector('input[placeholder="홍길동"]').value.trim();
+    if (!name) { alert('이름을 입력해 주세요.'); return; }
+
+    // 동의 확인
+    if (!document.getElementById('agreeCheck').checked) {
+      alert('개인정보 수집·이용에 동의해 주세요.');
+      return;
+    }
+
+    // 선택한 반 확인
+    const checkedRows = document.querySelectorAll('#scheduleBody tr.checked');
+    if (checkedRows.length === 0) {
+      alert('수강할 반을 하나 이상 선택해 주세요.');
+      return;
+    }
+
+    // 사용 수준 라벨
+    const levelCard = document.querySelector('.level-card.selected .level-name');
+    const levelLabel = levelCard ? levelCard.textContent : '';
+
+    // 정원 초과 확인
+    const overflowClasses = [];
+    checkedRows.forEach(row => {
+      const cid = parseInt(row.dataset.id);
+      if (students[cid].length >= MAX) {
+        overflowClasses.push(row.querySelector('.class-name').textContent);
+      }
+    });
+    if (overflowClasses.length > 0) {
+      alert('아래 반은 정원이 꽉 찼습니다:\n' + overflowClasses.join('\n'));
+      return;
+    }
+
+    // 배치표에 추가
+    checkedRows.forEach(row => {
+      const cid = parseInt(row.dataset.id);
+      students[cid].push({ name, level: levelLabel });
+      renderSlots(cid);
+    });
+
+    // 토스트 표시
+    showToast('✅ 신청이 완료되었습니다! 배치표에 반영되었어요.');
+
+    // 신청서 초기화
+    document.querySelector('input[placeholder="홍길동"]').value = '';
+    document.querySelector('input[placeholder="010-0000-0000"]').value = '';
+    document.querySelector('input[placeholder="예) 65세"]').value = '';
+    document.querySelector('input[placeholder="예) OO동"]').value = '';
+    document.querySelector('textarea').value = '';
+    document.querySelectorAll('.level-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('#scheduleBody tr').forEach(r => r.classList.remove('checked'));
+    document.getElementById('agreeCheck').checked = false;
+
+    // 배치표로 부드럽게 스크롤
+    setTimeout(() => {
+      document.querySelector('.placement-header').scrollIntoView({ behavior: 'smooth' });
+    }, 400);
+  }
+
+  /* ── 관리자 직접 추가 ── */
+  function addStudent() {
+    const name = document.getElementById('addName').value.trim();
+    const cid = parseInt(document.getElementById('addClass').value);
+    const msg = document.getElementById('addMsg');
+    if (!name) { msg.textContent = '이름을 입력해 주세요.'; return; }
+    if (students[cid].length >= MAX) { msg.textContent = '해당 반 정원이 꽉 찼습니다.'; return; }
+    students[cid].push({ name, level: '' });
+    renderSlots(cid);
+    document.getElementById('addName').value = '';
+    msg.textContent = `✅ ${name}님이 추가되었습니다.`;
+    setTimeout(() => msg.textContent = '', 2500);
+  }
+
+  document.getElementById('addName').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') addStudent();
+  });
+</script>
+
+<!-- 취소 확인 모달 -->
+<div class="modal-overlay" id="cancelModal">
+  <div class="modal-box">
+    <div class="modal-icon">⚠️</div>
+    <div class="modal-title">수강 취소 확인</div>
+    <div class="modal-info" id="cancelInfo"></div>
+    <div class="modal-btns">
+      <button class="modal-btn btn-cancel-no" onclick="closeModal()">아니요</button>
+      <button class="modal-btn btn-cancel-yes" id="cancelConfirmBtn">취소할게요</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
