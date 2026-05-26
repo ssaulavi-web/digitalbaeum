@@ -476,6 +476,27 @@
   .btn-cancel-no { background: var(--light); color: var(--muted); }
   .btn-cancel-yes { background: #ff6b35; color: white; }
 
+
+  /* ── 배치표 헤더 버튼 ── */
+  .hdr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .hdr-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-download { background: #00b4d8; color: white; }
+  .btn-upload   { background: rgba(255,255,255,0.18); color: white; border: 1.5px solid rgba(255,255,255,0.4); }
+  .btn-reset    { background: rgba(255,100,60,0.25); color: #ffcfc0; border: 1.5px solid rgba(255,100,60,0.4); }
+
 </style>
 </head>
 <body>
@@ -624,9 +645,19 @@
 
 <!-- ════ 수강생 배치표 ════ -->
 <div class="page">
-  <div class="placement-header">
-    <h2>📋 수강생 배치표</h2>
-    <p>각 반 정원 10명 · 중복 수강 가능</p>
+  <div class="placement-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;">
+    <div>
+      <h2>📋 수강생 배치표</h2>
+      <p>각 반 정원 10명 · 중복 수강 가능</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <label class="hdr-btn btn-upload" title="저장된 배치파일 불러오기" style="cursor:pointer;">
+        📂 불러오기
+        <input type="file" id="uploadFile" accept=".json" style="display:none" onchange="loadFromFile(event)">
+      </label>
+      <button class="hdr-btn btn-download" onclick="saveToFile()" title="현재 배치표 저장">💾 저장</button>
+      <button class="hdr-btn btn-reset" onclick="resetAll()" title="전체 초기화">🗑️ 초기화</button>
+    </div>
   </div>
 
   <!-- 화요일 -->
@@ -768,7 +799,71 @@
      공유 상태
   ════════════════════════════════ */
   const MAX = 10;
+  const STORAGE_KEY = 'digitalbaumter_students';
   const students = { 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] };
+
+  /* ── localStorage 저장 ── */
+  function saveToStorage() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(students)); } catch(e) {}
+  }
+
+  /* ── localStorage 복원 ── */
+  function loadFromStorage() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      for (let i = 1; i <= 6; i++) {
+        if (Array.isArray(saved[i])) students[i] = saved[i];
+      }
+    } catch(e) {}
+  }
+
+  /* ── JSON 파일로 저장(다운로드) ── */
+  function saveToFile() {
+    const total = Object.values(students).reduce((s,a)=>s+a.length,0);
+    if (total === 0) { showToast('⚠️ 저장할 수강생 데이터가 없습니다.'); return; }
+    const now = new Date();
+    const stamp = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2)
+                + '_' + ('0'+now.getHours()).slice(-2) + ('0'+now.getMinutes()).slice(-2);
+    const blob = new Blob([JSON.stringify(students, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '디지털배움터_배치표_' + stamp + '.json';
+    a.click();
+    showToast('💾 배치표가 저장되었습니다.');
+  }
+
+  /* ── JSON 파일 불러오기 ── */
+  function loadFromFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        let count = 0;
+        for (let i = 1; i <= 6; i++) {
+          if (Array.isArray(parsed[i])) { students[i] = parsed[i]; count += parsed[i].length; }
+        }
+        for (let i = 1; i <= 6; i++) renderSlots(i);
+        saveToStorage();
+        showToast('📂 배치표를 불러왔습니다. (수강생 ' + count + '명)');
+      } catch(err) {
+        showToast('⚠️ 파일을 읽을 수 없습니다. 올바른 배치파일인지 확인해 주세요.');
+      }
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  /* ── 전체 초기화 ── */
+  function resetAll() {
+    if (!confirm('배치표 전체를 초기화할까요? 이 작업은 되돌릴 수 없습니다.')) return;
+    for (let i = 1; i <= 6; i++) { students[i] = []; renderSlots(i); }
+    saveToStorage();
+    showToast('🗑️ 배치표가 초기화되었습니다.');
+  }
 
   /* ── 배치표 렌더 ── */
   function renderSlots(classId) {
@@ -791,6 +886,7 @@
     const cnt = list.length;
     document.getElementById('q' + classId).textContent = cnt + ' / 10명';
     document.getElementById('qf' + classId).style.width = (cnt / MAX * 100) + '%';
+    saveToStorage();
   }
 
   /* ── 취소 확인 모달 ── */
@@ -818,7 +914,8 @@
     setTimeout(() => { toast.style.display = 'none'; }, 3000);
   }
 
-  /* ── 초기 렌더 ── */
+  /* ── 초기 렌더 (localStorage 복원 포함) ── */
+  loadFromStorage();
   for (let i = 1; i <= 6; i++) renderSlots(i);
 
   /* ── 신청서: 수강반 토글 ── */
