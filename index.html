@@ -497,6 +497,23 @@
   .btn-upload   { background: rgba(255,255,255,0.18); color: white; border: 1.5px solid rgba(255,255,255,0.4); }
   .btn-reset    { background: rgba(255,100,60,0.25); color: #ffcfc0; border: 1.5px solid rgba(255,100,60,0.4); }
 
+
+  /* ── 수강생 명단 ── */
+  .roster-page { max-width: 800px; margin: 0 auto 30px; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,60,120,0.13); }
+  .roster-header { background: linear-gradient(135deg, #1a3a5c 0%, #0d6fa8 100%); padding: 24px 40px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .roster-header h2 { font-family:'Gmarket Sans',sans-serif; font-size:20px; font-weight:700; color:white; }
+  .roster-header p { font-size:12px; color:rgba(255,255,255,0.7); margin-top:3px; }
+  .roster-table-wrap { overflow-x:auto; padding: 20px 24px 24px; }
+  .roster-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .roster-table thead th { background:var(--primary); color:white; padding:10px 12px; font-weight:600; text-align:left; white-space:nowrap; }
+  .roster-table thead th:first-child { border-radius:8px 0 0 0; }
+  .roster-table thead th:last-child  { border-radius:0 8px 0 0; }
+  .roster-table tbody tr { border-bottom:1px solid var(--border); transition:background 0.15s; }
+  .roster-table tbody tr:hover { background:var(--light); }
+  .roster-table td { padding:10px 12px; vertical-align:middle; }
+  .roster-table td.no-data { text-align:center; color:var(--muted); padding:32px; font-size:13px; }
+  .roster-class-tag { display:inline-block; background:var(--light); color:var(--primary); font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; margin:2px 2px 0 0; white-space:nowrap; }
+
 </style>
 </head>
 <body>
@@ -800,21 +817,32 @@
   ════════════════════════════════ */
   const MAX = 10;
   const STORAGE_KEY = 'digitalbaumter_students';
+  const ROSTER_KEY  = 'digitalbaumter_roster';
+  const roster = [];  // 전체 명단 (개인정보 포함)
   const students = { 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] };
 
   /* ── localStorage 저장 ── */
   function saveToStorage() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(students)); } catch(e) {}
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
+      localStorage.setItem(ROSTER_KEY,  JSON.stringify(roster));
+    } catch(e) {}
   }
 
   /* ── localStorage 복원 ── */
   function loadFromStorage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw);
-      for (let i = 1; i <= 6; i++) {
-        if (Array.isArray(saved[i])) students[i] = saved[i];
+      if (raw) {
+        const saved = JSON.parse(raw);
+        for (let i = 1; i <= 6; i++) {
+          if (Array.isArray(saved[i])) students[i] = saved[i];
+        }
+      }
+      const rawR = localStorage.getItem(ROSTER_KEY);
+      if (rawR) {
+        const savedR = JSON.parse(rawR);
+        if (Array.isArray(savedR)) { roster.length = 0; savedR.forEach(r => roster.push(r)); }
       }
     } catch(e) {}
   }
@@ -826,11 +854,9 @@
     const now = new Date();
     const stamp = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2)
                 + '_' + ('0'+now.getHours()).slice(-2) + ('0'+now.getMinutes()).slice(-2);
-    const blob = new Blob([JSON.stringify(students, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = '디지털배움터_배치표_' + stamp + '.json';
-    a.click();
+    const json = JSON.stringify(students, null, 2);
+    triggerDownload('data:application/json;charset=utf-8,' + encodeURIComponent(json),
+                    '디지털배움터_배치표_' + stamp + '.json');
     showToast('💾 배치표가 저장되었습니다.');
   }
 
@@ -848,6 +874,7 @@
         }
         for (let i = 1; i <= 6; i++) renderSlots(i);
         saveToStorage();
+        renderRoster();
         showToast('📂 배치표를 불러왔습니다. (수강생 ' + count + '명)');
       } catch(err) {
         showToast('⚠️ 파일을 읽을 수 없습니다. 올바른 배치파일인지 확인해 주세요.');
@@ -863,6 +890,80 @@
     for (let i = 1; i <= 6; i++) { students[i] = []; renderSlots(i); }
     saveToStorage();
     showToast('🗑️ 배치표가 초기화되었습니다.');
+  }
+
+  /* ── 수강생 명단 렌더 ── */
+  const CLASS_NAMES = {
+    1:'화요일 오전 – 시니어 스마트폰 활용반',
+    2:'화요일 오후 – 바이브코딩 + 전자책반',
+    3:'목요일 오전 – 유튜브 + 인스타그램반',
+    4:'목요일 오후 – 컴퓨터 생초보 + AI입문반',
+    5:'목요일 저녁 – 블로그 체험단반',
+    6:'토요일 오전 – 블록코딩(엔트리)반'
+  };
+
+  function renderRoster() {
+    const tbody = document.getElementById('rosterBody');
+    if (!roster.length) {
+      tbody.innerHTML = '<tr><td class="no-data" colspan="8">아직 신청한 수강생이 없습니다.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = roster.map((r, i) => {
+      const tags = r.classes.map(c => '<span class="roster-class-tag">' + (CLASS_NAMES[c]||c) + '</span>').join('');
+      return '<tr>' +
+        '<td style="color:var(--muted);font-size:12px">' + (i+1) + '</td>' +
+        '<td style="font-weight:700">' + r.name + '</td>' +
+        '<td>' + (r.phone||'–') + '</td>' +
+        '<td>' + (r.age||'–') + '</td>' +
+        '<td>' + (r.region||'–') + '</td>' +
+        '<td><span style="font-size:11px;background:var(--light);padding:2px 7px;border-radius:10px;color:var(--primary);font-weight:700">' + (r.level||'–') + '</span></td>' +
+        '<td>' + tags + '</td>' +
+        '<td style="font-size:11px;color:var(--muted);white-space:nowrap">' + r.datetime + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  /* ── 명단 초기화 ── */
+  function resetRoster() {
+    if (!confirm('수강생 명단 전체를 초기화할까요?')) return;
+    roster.length = 0;
+    renderRoster();
+    saveToStorage();
+    showToast('🗑️ 명단이 초기화되었습니다.');
+  }
+
+  /* ── 엑셀(CSV) 다운로드 ── */
+  /* ── 공통 다운로드 헬퍼 ── */
+  function triggerDownload(dataUri, filename) {
+    const a = document.createElement('a');
+    a.href = dataUri;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => document.body.removeChild(a), 300);
+  }
+
+  function downloadExcel() {
+    if (!roster.length) { showToast('⚠️ 다운로드할 명단이 없습니다.'); return; }
+    const BOM = '\uFEFF';
+    const header = ['번호','이름','연락처','나이','동네','수준','수강반','신청일시'];
+    const rows = roster.map((r, i) => [
+      i+1,
+      r.name,
+      r.phone||'',
+      r.age||'',
+      r.region||'',
+      r.level||'',
+      r.classes.map(c => CLASS_NAMES[c]||c).join(' / '),
+      r.datetime
+    ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
+    const csv = BOM + [header.join(','), ...rows].join('\n');
+    const now = new Date();
+    const stamp = now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2);
+    triggerDownload('data:text/csv;charset=utf-8,' + encodeURIComponent(csv),
+                    '디지털배움터_수강생명단_' + stamp + '.csv');
+    showToast('📊 엑셀 파일이 다운로드되었습니다.');
   }
 
   /* ── 배치표 렌더 ── */
@@ -917,6 +1018,7 @@
   /* ── 초기 렌더 (localStorage 복원 포함) ── */
   loadFromStorage();
   for (let i = 1; i <= 6; i++) renderSlots(i);
+  renderRoster();
 
   /* ── 신청서: 수강반 토글 ── */
   function toggleRow(row) {
@@ -931,8 +1033,11 @@
 
   /* ── 신청 완료 → 배치표 자동 반영 ── */
   function submitForm() {
-    // 이름 확인
-    const name = document.querySelector('input[placeholder="홍길동"]').value.trim();
+    // 개인정보 수집
+    const name   = document.querySelector('input[placeholder="홍길동"]').value.trim();
+    const phone  = document.querySelector('input[placeholder="010-0000-0000"]').value.trim();
+    const age    = document.querySelector('input[placeholder="예) 65세"]').value.trim();
+    const region = document.querySelector('input[placeholder="예) OO동"]').value.trim();
     if (!name) { alert('이름을 입력해 주세요.'); return; }
 
     // 동의 확인
@@ -966,11 +1071,20 @@
     }
 
     // 배치표에 추가
+    const classIds = [];
     checkedRows.forEach(row => {
       const cid = parseInt(row.dataset.id);
       students[cid].push({ name, level: levelLabel });
       renderSlots(cid);
+      classIds.push(cid);
     });
+
+    // 명단에 추가
+    const now = new Date();
+    const dt = now.getFullYear() + '.' + ('0'+(now.getMonth()+1)).slice(-2) + '.' + ('0'+now.getDate()).slice(-2)
+             + ' ' + ('0'+now.getHours()).slice(-2) + ':' + ('0'+now.getMinutes()).slice(-2);
+    roster.push({ name, phone, age, region, level: levelLabel, classes: classIds, datetime: dt });
+    renderRoster();
 
     // 토스트 표시
     showToast('✅ 신청이 완료되었습니다! 배치표에 반영되었어요.');
@@ -1009,6 +1123,40 @@
     if (e.key === 'Enter') addStudent();
   });
 </script>
+
+
+<!-- ════ 수강생 명단 ════ -->
+<div class="roster-page" id="rosterPage">
+  <div class="roster-header">
+    <div>
+      <h2>👥 수강생 명단</h2>
+      <p>신청서 제출 시 자동으로 기록됩니다.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="hdr-btn btn-download" onclick="downloadExcel()" title="엑셀로 다운로드">📊 엑셀 다운로드</button>
+      <button class="hdr-btn btn-reset" onclick="resetRoster()" title="명단 초기화">🗑️ 명단 초기화</button>
+    </div>
+  </div>
+  <div class="roster-table-wrap">
+    <table class="roster-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>이름</th>
+          <th>연락처</th>
+          <th>나이</th>
+          <th>동네</th>
+          <th>수준</th>
+          <th>수강반</th>
+          <th>신청일시</th>
+        </tr>
+      </thead>
+      <tbody id="rosterBody">
+        <tr><td class="no-data" colspan="8">아직 신청한 수강생이 없습니다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- 취소 확인 모달 -->
 <div class="modal-overlay" id="cancelModal">
